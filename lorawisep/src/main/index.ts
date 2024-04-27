@@ -2,6 +2,8 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+const { exec } = require('child_process')
+const fs = require('fs')
 
 function createWindow(): void {
   // Create the browser window.
@@ -49,9 +51,6 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
-
   createWindow()
 
   app.on('activate', function () {
@@ -72,3 +71,63 @@ app.on('window-all-closed', () => {
 
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
+
+  // IPC test
+  ipcMain.on('setParameters', (event, parameters) => {
+    const {
+      name, devices, environment, width, heigth, qtdGateways, algorithmOptimization
+    } = parameters;
+
+    console.log( parameters )
+    console.log( "devices: ", devices )
+
+    event.reply('setParameters', 'ok')
+      exec(`python3 src/renderer/src/scripts/gen-pos.py ${devices} ${width} ${heigth}`, (error, stdout, stderr) => {
+      if(error){
+        console.log(`error: ${error.message}`)
+        return;
+      }
+      if(stderr){
+        console.log(`stderr: ${stderr}`);
+        return;
+      }
+      console.log(`stdout: ${stdout}`);
+    
+    event.reply('graphDone', 'ok')
+  })
+
+  // ipcMain.on('generateGraph', (event, parameters) => {
+  //   const { num_devices,
+  //           width,
+  //           length
+  //   } = parameters;
+
+  //   exec(`python3 generate_positions.py ${num_devices} ${width} ${length}`, (error, stdout, stderr) => {
+  //     if(error){
+  //       console.log(`error: ${error.message}`)
+  //       return;
+  //     }
+  //     if(stderr){
+  //       console.log(`stderr: ${stderr}`);
+  //       return;
+  //     }
+  //     console.log(`stdout: ${stdout}`);
+  //     exec(`python3 analysis/graph_ed_positions.py ${root_electron} ${endevices_file}`, (error, stdout, stderr) => {
+  //       if(error){
+  //         console.log(`error: ${error.message}`)
+  //         return;
+  //       }
+  //       if(stderr){
+  //         console.log(`stderr: ${stderr}`);
+  //         return;
+  //       }
+  //       console.log(`stdout: ${stdout}`);
+
+  //       // event.sender.send("graphDone");
+  //       let imageData = fs.readFileSync("./analysis/ed_positions/positions.png", {encoding: "base64"});
+        
+  //       win.webContents.send("graphDone", imageData);
+
+  //     });
+  //   });
+  });

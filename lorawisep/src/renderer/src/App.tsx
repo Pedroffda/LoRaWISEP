@@ -1,25 +1,24 @@
-import React from 'react';
-import { Button, Card, Col, Divider, Form, Input, Modal, Row, Select, Space } from 'antd';
+import {useState} from 'react';
+import { Button, Card, Col, Form, Input, Modal, Row, Select, Space } from 'antd';
 import logo from './assets/logo.png'
 import pos from './assets/pos_gateways.png'
 
 const App: React.FC = () => {
   const [form] = Form.useForm();
-  const [context, setContext] = React.useState<any>([]);
+  const [context, setContext] = useState<any>([]);
 
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
 
-  const onFinish = (values: any) => {
+  const onFinish = (values) => {
     console.log(values);
     setContext(values);
+    window.electron.setParameters(values);
     setOpen(true);
   };
 
   const onReset = () => {
     form.resetFields();
   };
-
-
 
   const gridStyle: React.CSSProperties = {
     width: '100%',
@@ -44,7 +43,7 @@ const App: React.FC = () => {
 
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '96vh' }}>
 
-        <Modal title="Cenário Gerado" open={open} okText={'Simular'} onOk={() => { setOpen(false) }} onCancel={() => { setOpen(false) }}>
+        {/* <Modal title="Cenário Gerado" open={open} okText={'Simular'} onOk={() => { setOpen(false) }} onCancel={() => { setOpen(false) }}>
           <div style={{ textAlign: 'center' }}>
             <img alt="example" src={pos} style={{ width: '100%', height: '100%' }} />
             <Divider />
@@ -56,9 +55,9 @@ const App: React.FC = () => {
             </Card>
             <Button type="primary" style={{ marginTop: '10px' }}>Download Resultados</Button>
           </div>
-        </Modal>
+        </Modal> */}
 
-        {/* <Modal width={1000} title="Cenário Gerado" open={open} onCancel={() => { setOpen(false)}} footer={
+        <Modal width={1000} title="Cenário Gerado" open={open} onCancel={() => { setOpen(false)}} footer={
         [
           <Button key="back" onClick={() => { setOpen(false) }}>
             Voltar
@@ -75,7 +74,7 @@ const App: React.FC = () => {
           </Button>,]
       }>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <img alt="example" src="public/pos_gateways.png" style={{ width: '80%', height: '80%'}} />
+          <img alt="example" src={pos} style={{ width: '50%', height: '50%'}} />
           <div style={{ marginLeft: '20px' }}>
             <Card title="Resultados da Simulação">
               <Card.Grid style={gridStyle}>Packet Delivery Rate: 92%</Card.Grid>
@@ -85,7 +84,7 @@ const App: React.FC = () => {
             </Card>
           </div>
         </div>
-      </Modal> */}
+      </Modal> 
 
         <Form
           style={{ width: '85%', backgroundColor: 'white', padding: '20px', borderRadius: '10px' }}
