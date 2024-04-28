@@ -32,9 +32,8 @@ def main():
     min_y, max_y = 0.0, float(sys.argv[3]) * 1000
     print(f'Gerando dispositivos com coordenadas y entre {min_y} e {max_y}...')
 
-
     coordenadas_dispositivos = gerar_coordenadas_aleatorias(n_dispositivos, min_x, max_x, min_y, max_y)
-    salvar_coordenadas_em_csv(coordenadas_dispositivos, 'input/endevices.csv')
+    salvar_coordenadas_em_csv(coordenadas_dispositivos, './src/main/output/endevices.csv')
 
     df = pd.DataFrame(coordenadas_dispositivos, columns=['x', 'y'])
     num_dispositivos = len(df.index)

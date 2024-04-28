@@ -82,7 +82,7 @@ app.on('window-all-closed', () => {
     console.log( "devices: ", devices )
 
     event.reply('setParameters', 'ok')
-      exec(`python3 src/renderer/src/scripts/gen-pos.py ${devices} ${width} ${heigth}`, (error, stdout, stderr) => {
+      exec(`python3 src/main/scripts/gen-pos.py ${devices} ${width} ${heigth}`, (error, stdout, stderr) => {
       if(error){
         console.log(`error: ${error.message}`)
         return;
