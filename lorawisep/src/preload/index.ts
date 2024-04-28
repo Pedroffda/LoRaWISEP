@@ -2,13 +2,13 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
 interface SimulationParameters {
-  name: string;
-  device: string;    
-  environment: string;
-  width: string;
-  heigth: string;
-  qtdGateways: string;
-  algorithmOptimization: string;
+  name: string
+  device: string
+  environment: string
+  width: string
+  heigth: string
+  qtdGateways: string
+  algorithmOptimization: string
 }
 
 // Custom APIs for renderer
@@ -20,9 +20,12 @@ const api = {}
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', {
-      setParameters: (parameters:SimulationParameters) => ipcRenderer.send("setParameters", parameters),
-      generateGraph: (parameters) => ipcRenderer.send("generateGraph", parameters),
-      handleResult: (callback) => ipcRenderer.on("graphDone", callback),
+      setParameters: (parameters: SimulationParameters) =>
+        ipcRenderer.send('setParameters', parameters),
+      // generateGraph: (parameters) => ipcRenderer.send('generateGraph', parameters),
+      handleResult: (callback) => ipcRenderer.on('graphDone', callback),
+      generateGraph: (parameters: SimulationParameters) =>
+        ipcRenderer.invoke('generateGraph', parameters)
     })
     contextBridge.exposeInMainWorld('api', api)
   } catch (error) {

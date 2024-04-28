@@ -37,12 +37,74 @@ function createWindow(): void {
   }
 }
 
+const generateGraph = async (parameters) => {
+  const { num_devices, width, length } = parameters
+
+  const rootDir =
+    'D:\\ufpi\\outros\\littoral\\projetos\\electron\\LoRaWISEP\\lorawisep\\src\\main\\'
+
+  exec(
+    `python ./src/main/scripts/graph_ed_positions.py ${rootDir} ${rootDir}\\output\\endevices.csv`,
+    async (error, stdout, stderr) => {
+      if (error) {
+        console.log(`error: ${error.message}`)
+        return
+      }
+      if (stderr) {
+        console.log(`stderr: ${stderr}`)
+        return
+      }
+      console.log(`stdout: ${stdout}`)
+
+      // event.sender.send("graphDone");
+    }
+  )
+
+  return true
+}
+
+const handleGenerateGraph = async (event, parameters) => {
+  const { name, devices, environment, width, heigth, qtdGateways, algorithmOptimization } =
+    parameters
+
+  let b64 = ''
+  const rootDir =
+    'D:\\ufpi\\outros\\littoral\\projetos\\electron\\LoRaWISEP\\lorawisep\\src\\main\\'
+
+  console.log(parameters)
+  console.log('devices: ', devices)
+
+  // event.reply('setParameters', 'ok')
+  await exec(
+    `python ./src/main/scripts/gen-pos.py ${devices} ${width} ${heigth}`,
+    async (error, stdout, stderr) => {
+      if (error) {
+        console.log(`error: ${error.message}`)
+        return
+      }
+      if (stderr) {
+        console.log(`stderr: ${stderr}`)
+        return
+      }
+      console.log(`stdout: ${stdout}`)
+      await generateGraph({ devices, width, heigth })
+      b64 = await fs.readFileSync(`${rootDir}\\analysis\\ed_positions\\positions.png`, {
+        encoding: 'base64'
+      })
+      // event.reply('graphDone', 'ok')
+    }
+  )
+  console.log('b64: ', b64)
+  return b64
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
+  ipcMain.handle('generateGraph', handleGenerateGraph)
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
@@ -72,62 +134,64 @@ app.on('window-all-closed', () => {
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
 
-  // IPC test
-  ipcMain.on('setParameters', (event, parameters) => {
-    const {
-      name, devices, environment, width, heigth, qtdGateways, algorithmOptimization
-    } = parameters;
+// IPC test
+ipcMain.on('setParameters', (event, parameters) => {
+  const { name, devices, environment, width, heigth, qtdGateways, algorithmOptimization } =
+    parameters
 
-    console.log( parameters )
-    console.log( "devices: ", devices )
+  console.log(parameters)
+  console.log('devices: ', devices)
 
-    event.reply('setParameters', 'ok')
-      exec(`python3 src/main/scripts/gen-pos.py ${devices} ${width} ${heigth}`, (error, stdout, stderr) => {
-      if(error){
+  event.reply('setParameters', 'ok')
+  exec(
+    `python ./src/main/scripts/gen-pos.py ${devices} ${width} ${heigth}`,
+    (error, stdout, stderr) => {
+      if (error) {
         console.log(`error: ${error.message}`)
-        return;
+        return
       }
-      if(stderr){
-        console.log(`stderr: ${stderr}`);
-        return;
+      if (stderr) {
+        console.log(`stderr: ${stderr}`)
+        return
       }
-      console.log(`stdout: ${stdout}`);
-    
-    event.reply('graphDone', 'ok')
-  })
+      console.log(`stdout: ${stdout}`)
+      generateGraph()
+      event.reply('graphDone', 'ok')
+    }
+  )
+})
 
-  // ipcMain.on('generateGraph', (event, parameters) => {
-  //   const { num_devices,
-  //           width,
-  //           length
-  //   } = parameters;
+// ipcMain.on('generateGraph', (event, parameters) => {
+//   const { num_devices,
+//           width,
+//           length
+//   } = parameters;
 
-  //   exec(`python3 generate_positions.py ${num_devices} ${width} ${length}`, (error, stdout, stderr) => {
-  //     if(error){
-  //       console.log(`error: ${error.message}`)
-  //       return;
-  //     }
-  //     if(stderr){
-  //       console.log(`stderr: ${stderr}`);
-  //       return;
-  //     }
-  //     console.log(`stdout: ${stdout}`);
-  //     exec(`python3 analysis/graph_ed_positions.py ${root_electron} ${endevices_file}`, (error, stdout, stderr) => {
-  //       if(error){
-  //         console.log(`error: ${error.message}`)
-  //         return;
-  //       }
-  //       if(stderr){
-  //         console.log(`stderr: ${stderr}`);
-  //         return;
-  //       }
-  //       console.log(`stdout: ${stdout}`);
+//   exec(`python3 generate_positions.py ${num_devices} ${width} ${length}`, (error, stdout, stderr) => {
+//     if(error){
+//       console.log(`error: ${error.message}`)
+//       return;
+//     }
+//     if(stderr){
+//       console.log(`stderr: ${stderr}`);
+//       return;
+//     }
+//     console.log(`stdout: ${stdout}`);
+//     exec(`python3 analysis/graph_ed_positions.py ${root_electron} ${endevices_file}`, (error, stdout, stderr) => {
+//       if(error){
+//         console.log(`error: ${error.message}`)
+//         return;
+//       }
+//       if(stderr){
+//         console.log(`stderr: ${stderr}`);
+//         return;
+//       }
+//       console.log(`stdout: ${stdout}`);
 
-  //       // event.sender.send("graphDone");
-  //       let imageData = fs.readFileSync("./analysis/ed_positions/positions.png", {encoding: "base64"});
-        
-  //       win.webContents.send("graphDone", imageData);
+//       // event.sender.send("graphDone");
+//       let imageData = fs.readFileSync("./analysis/ed_positions/positions.png", {encoding: "base64"});
 
-  //     });
-  //   });
-  });
+//       win.webContents.send("graphDone", imageData);
+
+//     });
+//   });
