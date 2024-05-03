@@ -2,7 +2,7 @@
  export interface ElectronAPI {
     setParameters: (values: SimulationParameters) => Promise<void>,
     generateGraph: () => Promise<void>,
-    handleResult: () => Promise<void>,
+    handleResult: (imageData) => Promise<void>,
   }
 declare global {
   interface Window {

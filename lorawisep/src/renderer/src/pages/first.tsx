@@ -1,5 +1,6 @@
 import { Button, Col, Form, Input, Row, Select, Space } from 'antd';
 import logo from './../assets/logo.png'
+import { useEffect } from 'react';
 
 interface SimulationParameters {
     next: () => void;
@@ -17,6 +18,16 @@ export default function SimSetup({ next }: SimulationParameters) {
   const onReset = () => {
     form.resetFields();
   };
+
+  useEffect(() => {
+    console.log("windows:", window)
+    // window.electron.generateGraph();
+    window.electron.handleResult((imageData) => {
+        let image = document.getElementById('image') as HTMLImageElement;
+        image.src = `data:image/png;base64,${imageData}`;
+        // setGraphGatewaysDone(true);
+    });
+}, []);
 
   return (  
     <>
@@ -106,8 +117,8 @@ export default function SimSetup({ next }: SimulationParameters) {
               placeholder="Selecione o algoritmo"
               allowClear
             >
-              <Select.Option value="qtd1">Elbow Method</Select.Option>
-              <Select.Option value="qtd2">Gap Statictic</Select.Option>
+              <Select.Option value="elbow">Elbow Method</Select.Option>
+              <Select.Option value="gap">Gap Statictic</Select.Option>
             </Select>
           </Form.Item>
 
@@ -120,9 +131,9 @@ export default function SimSetup({ next }: SimulationParameters) {
               placeholder="Selecione o algoritmo"
               allowClear
             >
-              <Select.Option value="opt1">K-Means</Select.Option>
-              <Select.Option value="opt2">Fuzzy C-Means</Select.Option>
-              <Select.Option value="opt3">Algoritmo Genético</Select.Option>
+              <Select.Option value="kmeans">K-Means</Select.Option>
+              <Select.Option value="fuzzy">Fuzzy C-Means</Select.Option>
+              <Select.Option value="genetic">Algoritmo Genético</Select.Option>
             </Select>
           </Form.Item>
 

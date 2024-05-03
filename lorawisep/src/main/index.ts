@@ -35,6 +35,104 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+
+  ipcMain.on('setParameters', (event, parameters) => {
+    const {
+      name, devices, environment, width, heigth, qtdGateways, algorithmOptimization
+    } = parameters;
+
+    console.log(parameters)
+    console.log("devices: ", devices)
+
+    event.reply('setParameters', 'ok')
+    exec(`python3 src/main/scripts/gen-pos.py ${devices} ${width} ${heigth}`, (error, stdout, stderr) => {
+      if (error) {
+        console.log(`error: ${error.message}`)
+        return;
+      }
+      if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        return;
+      }
+
+      console.log(`stdout: ${stdout}`);
+      
+      // generateGraph()
+
+      // event.reply('graphDone', 'ok')
+
+      // Gateways configuration
+      let cmd = ''
+      const endevicesFile = './src/main/output/endevices.csv'
+
+      console.log("antes de exec o python de otimização")
+
+      switch (algorithmOptimization) {
+        case 'kmeans':
+          cmd = `python3 src/main/scripts/optmization/kmeans.py ${endevicesFile}`
+          break
+        // case 'fuzzy':
+        //   cmd = `python3 src/main/scripts/fuzzy.py ${endevicesFile}`
+        //   break
+        // case 'genetic':
+        //   cmd = `python3 src/main/scripts/genetic.py ${qtdGateways}`
+        //   break
+        // case 'random':
+        //   cmd = `python3 src/main/scripts/random.py ${qtdGateways}`
+        //   break
+        default:
+          break
+      }
+
+      console.log(cmd)
+
+      exec(cmd, (error, stdout, stderr) => {
+        if (error) {
+          console.log(`error: ${error.message}`)
+          return
+        }
+        if (stderr) {
+          console.log(`stderr: ${stderr}`)
+          return
+        }
+        console.log(`stdout: ${stdout}`)
+      })
+
+      // Gateways Posicion Graph
+
+      exec(
+        `python3 src/main/scripts/gen-scenario-graph.py`,
+        async (error, stdout, stderr) => {
+          if (error) {
+            console.log(`error: ${error.message}`)
+            return
+          }
+          if (stderr) {
+            console.log(`stderr: ${stderr}`)
+            return
+          }
+          console.log("Gerou o gráfico indexjs")
+          console.log(`stdout: ${stdout}`)
+
+          // let imageData = fs.readFileSync("./src/main/output/complete-positions.png", { encoding: "base64" });
+          // console.log("imageData: ", imageData)
+          // mainWindow.webContents.send("graphDone", imageData)
+          // event.reply('graphGatewaysDone', imageData)
+          let imageData;
+          try {
+            imageData = await fs.readFileSync("./src/main/output/complete-positions.png", { encoding: "base64" });
+            // console.log(imageData)
+            mainWindow.webContents.send("graphDone", imageData);
+          } catch (err) {
+            console.error("Error reading image file:", err);
+          }
+        }
+      )
+
+    })
+  });
+
 }
 
 // This method will be called when Electron has finished
@@ -72,62 +170,30 @@ app.on('window-all-closed', () => {
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
 
-  // IPC test
-  ipcMain.on('setParameters', (event, parameters) => {
-    const {
-      name, devices, environment, width, heigth, qtdGateways, algorithmOptimization
-    } = parameters;
+const root_electron = __dirname;
+console.log("root: ", root_electron)
 
-    console.log( parameters )
-    console.log( "devices: ", devices )
+const generateGraph = async () => {
+  // const rootDir =
+  // 'D:\\ufpi\\outros\\littoral\\projetos\\electron\\LoRaWISEP\\lorawisep\\src\\main\\'
 
-    event.reply('setParameters', 'ok')
-      exec(`python3 src/main/scripts/gen-pos.py ${devices} ${width} ${heigth}`, (error, stdout, stderr) => {
-      if(error){
+  exec(
+    `python3 ./src/main/scripts/gen-graph.py ./src/main/output/endevices.csv`,
+    async (error, stdout, stderr) => {
+      if (error) {
         console.log(`error: ${error.message}`)
-        return;
+        return
       }
-      if(stderr){
-        console.log(`stderr: ${stderr}`);
-        return;
+      if (stderr) {
+        console.log(`stderr: ${stderr}`)
+        return
       }
-      console.log(`stdout: ${stdout}`);
-    
-    event.reply('graphDone', 'ok')
-  })
+      console.log("Gerou o gráfico")
+      console.log(`stdout: ${stdout}`)
 
-  // ipcMain.on('generateGraph', (event, parameters) => {
-  //   const { num_devices,
-  //           width,
-  //           length
-  //   } = parameters;
+      // event.sender.send("graphDone");
+    }
+  )
 
-  //   exec(`python3 generate_positions.py ${num_devices} ${width} ${length}`, (error, stdout, stderr) => {
-  //     if(error){
-  //       console.log(`error: ${error.message}`)
-  //       return;
-  //     }
-  //     if(stderr){
-  //       console.log(`stderr: ${stderr}`);
-  //       return;
-  //     }
-  //     console.log(`stdout: ${stdout}`);
-  //     exec(`python3 analysis/graph_ed_positions.py ${root_electron} ${endevices_file}`, (error, stdout, stderr) => {
-  //       if(error){
-  //         console.log(`error: ${error.message}`)
-  //         return;
-  //       }
-  //       if(stderr){
-  //         console.log(`stderr: ${stderr}`);
-  //         return;
-  //       }
-  //       console.log(`stdout: ${stdout}`);
-
-  //       // event.sender.send("graphDone");
-  //       let imageData = fs.readFileSync("./analysis/ed_positions/positions.png", {encoding: "base64"});
-        
-  //       win.webContents.send("graphDone", imageData);
-
-  //     });
-  //   });
-  });
+  return true
+}

@@ -22,7 +22,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('electron', {
       setParameters: (parameters:SimulationParameters) => ipcRenderer.send("setParameters", parameters),
       generateGraph: (parameters) => ipcRenderer.send("generateGraph", parameters),
-      handleResult: (callback) => ipcRenderer.on("graphDone", callback),
+      handleResult: (callback) => ipcRenderer.on("graphDone", (_event, value) => callback(value)),
     })
     contextBridge.exposeInMainWorld('api', api)
   } catch (error) {

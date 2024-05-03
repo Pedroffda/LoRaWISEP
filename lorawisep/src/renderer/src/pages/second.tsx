@@ -1,5 +1,6 @@
 import { Button, Card, Col, Row, Space, Divider } from 'antd';
-import pos from './../assets/pos_gateways.png'
+// import pos from '../../../main/output/complete-positions.png'
+// import { useEffect, useState } from 'react';
 
 interface SimulationParameters {
     next: () => void;
@@ -7,15 +8,22 @@ interface SimulationParameters {
 }
 
 export default function SimSetup({ next, prev }: SimulationParameters) {
+
+    // const [graphGatewaysDone, setGraphGatewaysDone] = useState(false);
+
+
     const gridStyle: React.CSSProperties = {
         width: '100%',
         textAlign: 'center',
     };
+
     return (
         <>
             <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px' }}>
                 <div style={{ display: 'flex' }}>
-                    <img alt="example" src={pos} style={{ width: '50%', height: '50%' }} />
+                {/* <div id='image'> */}
+                    <img id='image' alt="example" style={{ width: '50%', height: '50%' }} />
+                    {/* </div> */}
                     <div style={{ marginLeft: '20px' }}>
                         <Card title="Resultados da Simulação">
                             <Card.Grid style={gridStyle}>Packet Delivery Rate: 92%</Card.Grid>
@@ -34,7 +42,7 @@ export default function SimSetup({ next, prev }: SimulationParameters) {
                             <Button key="back" onClick={() => { prev() }}>
                                 Voltar
                             </Button>
-                            <Button type="primary" onClick={() => {next()}}>
+                            <Button type="primary" onClick={() => { next() }}>
                                 Seguinte
                             </Button>
                         </Space>
