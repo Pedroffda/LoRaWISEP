@@ -69,7 +69,7 @@ function createWindow(): void {
       console.log("antes de exec o python de otimização")
 
       switch (algorithmOptimization) {
-        case 'kmeans':
+        case 'K-Means':
           cmd = `python3 src/main/scripts/optmization/kmeans.py ${endevicesFile}`
           break
         // case 'fuzzy':
