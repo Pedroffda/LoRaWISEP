@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/navbar/NavBar';
 import icon from '@/assets/icon.png';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, Marker, Polygon, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
@@ -13,7 +13,7 @@ import {
     SaveAll,
     Search
 } from 'lucide-react';
-
+import './style.css'
 
 
 function SetViewOnClick({ coords }) {
@@ -34,6 +34,18 @@ function AreaSelector({ active, setDevices }) {
     });
 
     return null;
+}
+
+function orderCoordinates(points) {
+    // Calcular o centroide
+    let centroid = points.reduce((acc, point) => {
+        return [acc[0] + point[0], acc[1] + point[1]];
+    }, [0, 0]).map(coord => coord / points.length);
+
+    // Ordenar os pontos pelo ângulo em relação ao centroide
+    return points.sort((a, b) => {
+        return Math.atan2(a[1] - centroid[1], a[0] - centroid[0]) - Math.atan2(b[1] - centroid[1], b[0] - centroid[0]);
+    });
 }
 
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
@@ -119,6 +131,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
                                 </Button>
                                 <Button
                                     className="px-4 py-2 bg-red-600 text-white font-semibold rounded hover:bg-red-700"
+                                    onClick={() => setDevices([])}
                                 >
                                     <Trash2 size={18} />
                                 </Button>
@@ -139,11 +152,16 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
                                                 setDevices(newDevices);
                                             }
                                         }
-                                        
+
                                     }>
                                         <Popup>Device {index + 1}</Popup>
                                     </Marker>
                                 ))}
+                                {
+                                    devices.length > 3 && (
+                                        <Polygon positions={orderCoordinates(devices)} />
+                                    )
+                                }
                                 {/* <Marker position={currentPosition}>
                                     <Popup>You are here!</Popup>
                                 </Marker> */}
@@ -151,9 +169,12 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
 
                         </TabsContent>
                     </Tabs>
+                    <Button>
+                        Fechar
+                    </Button>
                     <pre>
-                                    {JSON.stringify(devices, null, 2)}
-                                </pre>
+                        {JSON.stringify(devices, null, 2)}
+                    </pre>
                 </div>
             </div>
         </div>
