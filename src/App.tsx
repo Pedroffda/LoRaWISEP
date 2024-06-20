@@ -1,13 +1,12 @@
 import './App.css'
-import { Button } from "@/components/ui/button"
 import { ParamsSimulatePage } from './pages/simulation/ParamsSimulatePage'
-
+import { ThemeProvider } from "@/components/theme-provider"
 
 function App() {
   return (
-    <>
-      <ParamsSimulatePage />
-    </>
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+       <ParamsSimulatePage />
+    </ThemeProvider>
   )
 }
 

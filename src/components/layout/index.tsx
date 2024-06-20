@@ -2,185 +2,223 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/navbar/NavBar';
 import icon from '@/assets/icon.png';
+import iconB from '@/assets/iot_device-black.png';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapContainer, Marker, Polygon, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, Marker, Polygon, Popup, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import L from 'leaflet';
 import {
-    Trash2,
-    SaveAll,
-    Search
+  Trash2,
+  SaveAll,
+  Search,
+  Expand
 } from 'lucide-react';
 import './style.css'
+import { SetViewOnClick, AreaSelector, DevicesSelector, orderCoordinates, addDevicesInArea } from './utils';
+import { ICoords } from '@/types';
 
-
-function SetViewOnClick({ coords }) {
-    const map = useMap();
-    map.flyTo(coords);
-
-    return null;
-}
-
-function AreaSelector({ active, setDevices }) {
-    const map = useMapEvents({
-        click: e => {
-            if (active) {
-                const newDevice = e.latlng;
-                setDevices(devices => [...devices, newDevice]);
-            }
-        }
-    });
-
-    return null;
-}
-
-function orderCoordinates(points) {
-    // Calcular o centroide
-    let centroid = points.reduce((acc, point) => {
-        return [acc[0] + point[0], acc[1] + point[1]];
-    }, [0, 0]).map(coord => coord / points.length);
-
-    // Ordenar os pontos pelo ângulo em relação ao centroide
-    return points.sort((a, b) => {
-        return Math.atan2(a[1] - centroid[1], a[0] - centroid[0]) - Math.atan2(b[1] - centroid[1], b[0] - centroid[0]);
-    });
-}
 
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
-    const [currentPosition, setCurrentPosition] = useState<[number, number]>(); // Coordenadas padrão
-    const [center, setCenter] = useState({ lat: 51.505, lng: -0.09 });
-    const [locationInput, setLocationInput] = useState('');
-    const [devices, setDevices] = useState([]);
-    const [selectMode, setSelectMode] = useState(false);
+  const [, setCurrentPosition] = useState<[number, number]>(); // Coordenadas padrão
+  const [center, setCenter] = useState<ICoords>({ lat: 51.505, lng: -0.09 });
+  const [locationInput, setLocationInput] = useState('');
+  const [devices, setDevices] = useState<ICoords[]>([]);
+  const [selectMode, setSelectMode] = useState(false);
+  const [deviceMode, setDeviceMode] = useState(false);
+  const [area, setArea] = useState<ICoords[]>([])
+  const [fullScreen, setFullScreen] = useState(false);
+  const [devicesCount, setDevicesCount] = useState('0');
+
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        setCurrentPosition([position.coords.latitude, position.coords.longitude]);
+        setCenter({ lat: position.coords.latitude, lng: position.coords.longitude });
+      }, (error) => {
+        console.error("Error fetching location", error);
+      });
+    }
+  }, []);
+
+  const handleSearch = async () => {
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${locationInput}`);
+    const data = await response.json();
+    if (data[0]) {
+      const newCenter = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+      setCenter(newCenter);
+
+      alert(newCenter.lat + ' ' + newCenter.lng);
+    } else {
+      alert('Location not found');
+    }
+  };
+
+  const MapEffect = () => {
+    const map = useMap(); // useMap agora está sendo chamado dentro de um componente filho de MapContainer
 
     useEffect(() => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((position) => {
-                setCurrentPosition([position.coords.latitude, position.coords.longitude]);
-                setCenter({ lat: position.coords.latitude, lng: position.coords.longitude });
-            }, (error) => {
-                console.error("Error fetching location", error);
-            });
-        }
-    }, []);
+      if (fullScreen) {
+        map.invalidateSize();
+      }
+    }, [fullScreen, map]);
 
-    const handleSearch = async () => {
-        // const map = useMap();
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${locationInput}`);
-        const data = await response.json();
-        if (data[0]) {
-            const newCenter = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-            setCenter(newCenter);
-
-            alert(newCenter.lat + ' ' + newCenter.lng);
-            // map.flyTo(newCenter, map.getZoom());
-        } else {
-            alert('Location not found');
-        }
-    };
+    return null; // Esse componente não renderiza nada visível
+  };
 
 
-    return (
-        <div>
-            <Navbar />
-            <div className="flex-1 space-y p-20 pt-6 flex flex-row">
-                <div className="basis-1/2">{children}</div>
-                <div className="basis-2/3">
-                    <Tabs defaultValue="view">
-                        <TabsList>
-                            <TabsTrigger value="view">Gráficos</TabsTrigger>
-                            <TabsTrigger value="map">Mapa</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="view">
-                            <img src={icon} alt="placeholder" />
-                        </TabsContent>
-                        <TabsContent value="map">
-                            <div className="flex space-x-2 mb-2">
-                                <Input
-                                    type="text"
-                                    className="flex-1 p-2 border border-gray-300 rounded"
-                                    value={locationInput}
-                                    onChange={e => setLocationInput(e.target.value)}
-                                    placeholder="Search for locations"
-                                />
-                                <Button
-                                    className="px-4 py-2 bg-blue-500 text-white font-semibold rounded hover:bg-blue-700"
-                                    onClick={handleSearch}
-                                >
-                                    <Search size={18} />
-                                </Button>
-                                <Button
-                                    // className="px-4 py-2 bg-green-500 text-white font-semibold rounded hover:bg-green-700"
-                                    onClick={() => setSelectMode(!selectMode)}
-                                >
-                                    {selectMode ? 'Stop Selecting' : 'Select Area'}
-                                </Button>
-                                <Button
-                                    // className="px-4 py-2 bg-green-500 text-white font-semibold rounded hover:bg-green-700"
-                                    onClick={() => setSelectMode(!selectMode)}
-                                >
-                                    {selectMode ? 'Stop Selecting' : 'Select Devices'}
-                                </Button>
-                                <Button
+  return (
+    <div>
+      <Navbar />
+      <div className="flex-1 space-y p-20 pt-6 flex flex-row">
+        <div className={fullScreen ? "w-full" : "basis-2/3"}>
+          <Tabs defaultValue="view">
+            <TabsList>
+              <TabsTrigger value="view">Gráficos</TabsTrigger>
+              <TabsTrigger value="map">Mapa</TabsTrigger>
+            </TabsList>
+            <TabsContent value="view">
+              <img src={icon} alt="placeholder" />
+            </TabsContent>
+            <TabsContent value="map">
+              <div className="flex space-x-2 mb-2">
+                <Input
+                  type="text"
+                  className="flex-1 p-2 border border-gray-300 rounded"
+                  value={locationInput}
+                  onChange={e => setLocationInput(e.target.value)}
+                  placeholder="Search for locations"
+                />
+                <Button
+                  className="px-4 py-2 bg-blue-500 text-white font-semibold rounded hover:bg-blue-700"
+                  onClick={handleSearch}
+                >
+                  <Search size={18} />
+                </Button>
+                <Button
+                  // className="px-4 py-2 bg-green-500 text-white font-semibold rounded hover:bg-green-700"
+                  onClick={() => setSelectMode(!selectMode)}
+                >
+                  {selectMode ? 'Stop Selecting' : 'Select Area'}
+                </Button>
+                <Button
+                  // className="px-4 py-2 bg-green-500 text-white font-semibold rounded hover:bg-green-700"
+                  onClick={() => setDeviceMode(!deviceMode)}
+                >
+                  {deviceMode ? 'Stop Add' : 'Add Device'}
+                </Button>
+                {/* <Button
                                     className="px-4 py-2 bg-green-600 text-white font-semibold rounded hover:bg-red-700"
-                                    onClick={() => setDevices([])}
+                                    onClick={() => setArea([])}
                                 >
                                     <SaveAll size={18} />
-                                </Button>
-                                <Button
-                                    className="px-4 py-2 bg-red-600 text-white font-semibold rounded hover:bg-red-700"
-                                    onClick={() => setDevices([])}
-                                >
-                                    <Trash2 size={18} />
-                                </Button>
-                            </div>
+                                </Button> */}
+                <Button
+                  className="px-4 py-2 bg-blue-500 text-white font-semibold rounded hover:bg-blue-700"
+                  onClick={() => setFullScreen(!fullScreen)}
+                >
+                  <Expand size={18} />
+                </Button>
+              </div>
 
-                            <MapContainer center={center} zoom={13} scrollWheelZoom={false} style={{ height: '75vh', width: '100%' }}>
-                                <TileLayer
-                                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                />
-                                <SetViewOnClick coords={center} />
-                                <AreaSelector active={selectMode} setDevices={setDevices} />
-                                {devices.map((device, index) => (
-                                    <Marker key={index} position={device} draggable={true} eventHandlers={
-                                        {
-                                            dragend: (e) => {
-                                                const newDevices = [...devices];
-                                                newDevices[index] = e.target.getLatLng();
-                                                setDevices(newDevices);
-                                            }
-                                        }
+              <MapContainer center={center} zoom={13} scrollWheelZoom={true} style={{ height: '75vh', width: '100%' }}>
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <SetViewOnClick coords={center} />
+                <AreaSelector active={selectMode} setArea={setArea} />
+                <DevicesSelector active={deviceMode} setDevices={setDevices} />
+                {devices.map((point, index) => (
+                  <Marker key={index} position={point} draggable={true} eventHandlers={
+                    {
+                      dragend: (e) => {
+                        const newDevices:ICoords[] = [...devices];
+                        newDevices[index] = e.target.getLatLng();
+                        setDevices(newDevices);
+                      }
+                    }
 
-                                    }>
-                                        <Popup>Device {index + 1}</Popup>
-                                    </Marker>
-                                ))}
-                                {
-                                    devices.length > 3 && (
-                                        <Polygon positions={orderCoordinates(devices)} />
-                                    )
-                                }
-                                {/* <Marker position={currentPosition}>
+                  }
+                    icon={
+                      new L.Icon({
+                        iconUrl: iconB,
+                        iconSize: [22, 22],
+                        className: "text-red-500",
+                      })
+                    }
+                  >
+                    <Popup>Device {index + 1}</Popup>
+                  </Marker>
+                ))}
+                {area.map((point, index) => (
+                  <Marker key={index} position={point} draggable={true} eventHandlers={
+                    {
+                      dragend: (e) => {
+                        const newArea:ICoords[] = [...area];
+                        newArea[index] = e.target.getLatLng();
+                        setArea(newArea);
+                      }
+                    }
+
+                  }>
+                    <Popup>Device {index + 1}</Popup>
+                  </Marker>
+                ))}
+                {
+                  area.length > 2 && (
+                    <Polygon positions={orderCoordinates({points: area})} />
+                  )
+                }
+                {/* <Marker position={currentPosition}>
                                     <Popup>You are here!</Popup>
                                 </Marker> */}
-                            </MapContainer>
+                {fullScreen && <MapEffect />}
+              </MapContainer>
 
-                        </TabsContent>
-                    </Tabs>
-                    <Button>
-                        Fechar
-                    </Button>
-                    <pre>
-                        {JSON.stringify(devices, null, 2)}
-                    </pre>
-                </div>
-            </div>
+              <div className="flex space-x-2 mt-2">
+                <Input
+                  type='number'
+                  className="flex-1 p-2 border border-gray-300 rounded"
+                  value={devicesCount}
+                  onChange={e => setDevicesCount(e.target.value)}
+                  placeholder="Number of devices"
+                />
+                <Button
+                  className="px-4 py-2 bg-blue-500 text-white font-semibold rounded hover:bg-blue-700"
+                  onClick={() => addDevicesInArea(area, setDevices, Number(devicesCount))}
+                >
+                  Add Devices Randomly
+                </Button>
+                <Button
+                  className="px-4 py-2 bg-red-500 text-white font-semibold rounded hover:bg-red-700"
+                  onClick={() => setDevices([])}
+                >
+                  Devices
+                  <Trash2 size={18} className="ml-2" />
+                </Button>
+                <Button
+                  className="px-4 py-2 bg-red-500 text-white font-semibold rounded hover:bg-red-700 flex items-center"
+                  onClick={() => setArea([])}
+                >
+                  Area
+                  <Trash2 size={18} className="ml-2" />
+                </Button>
+                <Button
+                  className="px-4 py-2 bg-green-500 text-white font-semibold rounded hover:bg-green-700"
+                  onClick={() => { }}
+                >
+                  <SaveAll size={18} />
+                </Button>
+
+              </div>
+
+            </TabsContent>
+          </Tabs>
         </div>
-    );
+        {!fullScreen && <div className="basis-1/2">{children}</div>}
+      </div>
+    </div>
+  );
 };
-function setSelectMode(arg0: boolean) {
-    throw new Error('Function not implemented.');
-}
-
