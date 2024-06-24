@@ -18,11 +18,12 @@ import {
 import './style.css'
 import { SetViewOnClick, AreaSelector, DevicesSelector, orderCoordinates, addDevicesInArea } from './utils';
 import { ICoords } from '@/types';
+import { toast } from '../ui/use-toast';
 
 
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const [, setCurrentPosition] = useState<[number, number]>(); // Coordenadas padrão
-  const [center, setCenter] = useState<ICoords>({ lat: 51.505, lng: -0.09 });
+  const [center, setCenter] = useState<ICoords>({ lat: 0, lng: 0 });
   const [locationInput, setLocationInput] = useState('');
   const [devices, setDevices] = useState<ICoords[]>([]);
   const [selectMode, setSelectMode] = useState(false);
@@ -49,7 +50,6 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
     if (data[0]) {
       const newCenter = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
       setCenter(newCenter);
-
       alert(newCenter.lat + ' ' + newCenter.lng);
     } else {
       alert('Location not found');
@@ -71,16 +71,18 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div>
-      <Navbar />
-      <div className="flex-1 space-y p-20 pt-6 flex flex-row">
-        <div className={fullScreen ? "w-full" : "basis-2/3"}>
+      {/* <Navbar /> */}
+      <div className="flex-1 space-y pt-6 flex flex-row">
+        <div className={fullScreen ? "w-full mx-10" : "basis-2/3 ml-4"}>
           <Tabs defaultValue="view">
             <TabsList>
               <TabsTrigger value="view">Gráficos</TabsTrigger>
               <TabsTrigger value="map">Mapa</TabsTrigger>
             </TabsList>
             <TabsContent value="view">
-              <img src={icon} alt="placeholder" />
+              <div className='w-2/3'>
+                <img src={icon} alt="placeholder" />
+              </div>
             </TabsContent>
             <TabsContent value="map">
               <div className="flex space-x-2 mb-2">
@@ -92,31 +94,55 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
                   placeholder="Search for locations"
                 />
                 <Button
-                  className="px-4 py-2 bg-blue-500 text-white font-semibold rounded hover:bg-blue-700"
+                  className="px-4 py-2 bg-cyan-800 text-white font-semibold rounded hover:bg-cyan-700"
                   onClick={handleSearch}
                 >
                   <Search size={18} />
                 </Button>
                 <Button
-                  // className="px-4 py-2 bg-green-500 text-white font-semibold rounded hover:bg-green-700"
+                  className="px-4 py-2 bg-cyan-800 text-white font-semibold rounded hover:bg-cyan-700"
                   onClick={() => setSelectMode(!selectMode)}
                 >
                   {selectMode ? 'Stop Selecting' : 'Select Area'}
                 </Button>
-                <Button
+                {/* <Button
                   // className="px-4 py-2 bg-green-500 text-white font-semibold rounded hover:bg-green-700"
                   onClick={() => setDeviceMode(!deviceMode)}
                 >
                   {deviceMode ? 'Stop Add' : 'Add Device'}
-                </Button>
+                </Button> */}
                 {/* <Button
                                     className="px-4 py-2 bg-green-600 text-white font-semibold rounded hover:bg-red-700"
                                     onClick={() => setArea([])}
                                 >
                                     <SaveAll size={18} />
                                 </Button> */}
+
+                <Input
+                  type='number'
+                  className="flex-1 p-2 border border-gray-300 rounded"
+                  value={devicesCount}
+                  onChange={e => setDevicesCount(e.target.value)}
+                  placeholder="Number of devices"
+                />
                 <Button
-                  className="px-4 py-2 bg-blue-500 text-white font-semibold rounded hover:bg-blue-700"
+                  className="px-4 py-2 bg-cyan-800 text-white font-semibold rounded hover:bg-cyan-700"
+                  onClick={() => addDevicesInArea(area, setDevices, Number(devicesCount))}
+                >
+                  Add Devices
+                </Button>
+                <Button
+                  className="px-4 py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-900"
+                  onClick={() => {
+                    toast({
+                      description: 'Area saved',
+                    })
+                  }}
+                >
+                  <SaveAll size={18} />
+                </Button>
+                <Button
+                  className="px-4 py-2 bg-cyan-800 text-white font-semibold rounded hover:bg-cyan-700"
                   onClick={() => setFullScreen(!fullScreen)}
                 >
                   <Expand size={18} />
@@ -134,7 +160,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
                   <Marker key={index} position={point} draggable={true} eventHandlers={
                     {
                       dragend: (e) => {
-                        const newDevices:ICoords[] = [...devices];
+                        const newDevices: ICoords[] = [...devices];
                         newDevices[index] = e.target.getLatLng();
                         setDevices(newDevices);
                       }
@@ -145,7 +171,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
                       new L.Icon({
                         iconUrl: iconB,
                         iconSize: [22, 22],
-                        className: "text-red-500",
+                        className: "text-red-800",
                       })
                     }
                   >
@@ -156,7 +182,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
                   <Marker key={index} position={point} draggable={true} eventHandlers={
                     {
                       dragend: (e) => {
-                        const newArea:ICoords[] = [...area];
+                        const newArea: ICoords[] = [...area];
                         newArea[index] = e.target.getLatLng();
                         setArea(newArea);
                       }
@@ -168,7 +194,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
                 ))}
                 {
                   area.length > 2 && (
-                    <Polygon positions={orderCoordinates({points: area})} />
+                    <Polygon positions={orderCoordinates({ points: area })} />
                   )
                 }
                 {/* <Marker position={currentPosition}>
@@ -178,46 +204,27 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
               </MapContainer>
 
               <div className="flex space-x-2 mt-2">
-                <Input
-                  type='number'
-                  className="flex-1 p-2 border border-gray-300 rounded"
-                  value={devicesCount}
-                  onChange={e => setDevicesCount(e.target.value)}
-                  placeholder="Number of devices"
-                />
+
                 <Button
-                  className="px-4 py-2 bg-blue-500 text-white font-semibold rounded hover:bg-blue-700"
-                  onClick={() => addDevicesInArea(area, setDevices, Number(devicesCount))}
-                >
-                  Add Devices Randomly
-                </Button>
-                <Button
-                  className="px-4 py-2 bg-red-500 text-white font-semibold rounded hover:bg-red-700"
+                  className="px-4 py-2 bg-red-800 text-white font-semibold rounded hover:bg-red-900"
                   onClick={() => setDevices([])}
                 >
+                  <Trash2 size={18} className="mr-2" />
                   Devices
-                  <Trash2 size={18} className="ml-2" />
                 </Button>
                 <Button
-                  className="px-4 py-2 bg-red-500 text-white font-semibold rounded hover:bg-red-700 flex items-center"
+                  className="px-4 py-2 bg-red-800 text-white font-semibold rounded hover:bg-red-900 flex items-center"
                   onClick={() => setArea([])}
                 >
+                  <Trash2 size={18} className="mr-2" />
                   Area
-                  <Trash2 size={18} className="ml-2" />
                 </Button>
-                <Button
-                  className="px-4 py-2 bg-green-500 text-white font-semibold rounded hover:bg-green-700"
-                  onClick={() => { }}
-                >
-                  <SaveAll size={18} />
-                </Button>
-
               </div>
 
             </TabsContent>
           </Tabs>
         </div>
-        {!fullScreen && <div className="basis-1/2">{children}</div>}
+        {!fullScreen && <div className="basis-1/3">{children}</div>}
       </div>
     </div>
   );
