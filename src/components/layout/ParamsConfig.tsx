@@ -39,7 +39,8 @@ type FormValues = {
   simWidth?: string,
   simHeight?: string,
   devicesQt?: string,
-  devices?: ICoords[]
+  devices?: ICoords[],
+  map: boolean,
 }
 
 export function ParamsConfig({ setAreaValues, devices }: IParamsConfigProps) {
@@ -62,7 +63,8 @@ export function ParamsConfig({ setAreaValues, devices }: IParamsConfigProps) {
         devicesQt: "10",
         gwPos: "kmeans",
         gwQuant: "gap",
-        devices: devices
+        devices: devices,
+        map: false,
       }
     }
   )
@@ -93,6 +95,10 @@ export function ParamsConfig({ setAreaValues, devices }: IParamsConfigProps) {
         title: "Formulário submetido",
         description: "Confira o console para os valores do formulário.",
       });
+
+      methods.setValue('devices', devices)
+      methods.setValue('map', true)
+
       if (setAreaValues) {
         setIsLoading(true);
         toast({
@@ -102,6 +108,7 @@ export function ParamsConfig({ setAreaValues, devices }: IParamsConfigProps) {
         if (values.simWidth && values.simHeight && values.devicesQt) {
           const devices = distributeDevicesRandomly(Number(values.devicesQt), Number(values.simWidth), Number(values.simHeight))
           methods.setValue('devices', devices)
+          methods.setValue('map', false)
           // console.log(devices);
           toast({
             title: "Dispositivos distribuídos com sucesso!",
@@ -114,7 +121,6 @@ export function ParamsConfig({ setAreaValues, devices }: IParamsConfigProps) {
             variant: "destructive",
           });
           return
-          methods.setValue('devices', devices)
         }
         setIsLoading(false);
       }
