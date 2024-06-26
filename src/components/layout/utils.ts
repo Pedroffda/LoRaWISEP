@@ -81,3 +81,17 @@ export function addDevicesInArea(area: string | any[], setDevices: { (value: Set
 
     setDevices(devices => [...devices, ...newDevices]);
 }
+
+export function distributeDevicesRandomly(n: number, width: number, height: number): ICoords[] {
+    const devices: ICoords[] = [];
+
+    for (let i = 0; i < n; i++) {
+      // Gera coordenadas aleatórias dentro dos limites especificados
+      const x = Math.random() * width;
+      const y = Math.random() * height;
+
+      devices.push({ lat: x, lng: y });
+    }
+
+    return devices;
+  }
