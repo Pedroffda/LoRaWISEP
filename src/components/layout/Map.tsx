@@ -21,8 +21,9 @@ interface IMapLayoutProps {
   setFullScreen: (fullScreen: boolean) => void;
   fullScreen: boolean;
   onSave?: (devices: ICoords[]) => void;
+  onDelete?: () => void;
 }
-export const MapLayout = ({setFullScreen, fullScreen, onSave}: IMapLayoutProps) => {
+export const MapLayout = ({setFullScreen, fullScreen, onSave, onDelete}: IMapLayoutProps) => {
   const [, setCurrentPosition] = useState<[number, number]>(); // Coordenadas padrão
   const [center, setCenter] = useState<ICoords>({ lat: 0, lng: 0 });
   const [locationInput, setLocationInput] = useState('');
@@ -184,7 +185,10 @@ export const MapLayout = ({setFullScreen, fullScreen, onSave}: IMapLayoutProps) 
       <div className="flex space-x-2 mt-2">
         <Button
           className="px-4 py-2 bg-red-800 text-white font-semibold rounded hover:bg-red-900"
-          onClick={() => setDevices([])}
+          onClick={() => {
+            setDevices([]);
+            onDelete && onDelete();
+          }}
         >
           <Trash2 size={18} className="mr-2" />
           Devices

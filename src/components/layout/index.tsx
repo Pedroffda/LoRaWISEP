@@ -34,6 +34,9 @@ export const MainLayout = () => {
                 onSave={(devices) => {
                   setDevices(devices);
                 }}
+                onDelete={() => {
+                  setDevices([]);
+                }}
               />
             </TabsContent>
           </Tabs>
